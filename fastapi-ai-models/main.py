@@ -36,7 +36,7 @@ class LSTMModel(torch.nn.Module):
         return out
 
 # Example: adjust these to match your model's architecture
-INPUT_SIZE = 1
+INPUT_SIZE = 3
 HIDDEN_SIZE = 64
 NUM_LAYERS = 2
 OUTPUT_SIZE = 1
@@ -49,7 +49,7 @@ def predict_values(text):
     # Expecting comma-separated latency values in text
     try:
         values = [float(x) for x in text.strip().split(',')]
-        arr = np.array(values, dtype=np.float32).reshape(1, -1, 1)  # (batch, seq, input_size)
+        arr = np.array(values, dtype=np.float32).reshape(1, -1, 3)  # (batch, seq, input_size)
         tensor = torch.from_numpy(arr)
         with torch.no_grad():
             output = model(tensor)
