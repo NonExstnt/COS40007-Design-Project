@@ -41,7 +41,7 @@
                 if (!response.ok) throw new Error('Network response was not ok');
                 const data = await response.json();
                 resultDiv.style.display = 'block';
-                resultDiv.textContent = `Predicted Time: ${data.predicted_label}`;
+                resultDiv.textContent = `Predicted Time: ${data.predicted_label}ms`;
             } catch (err) {
                 resultDiv.style.display = 'block';
                 resultDiv.textContent = 'Error: ' + err.message;

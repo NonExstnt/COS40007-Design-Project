@@ -12,6 +12,7 @@ class Item(BaseModel):
 @app.post("/predict/")
 async def predict(item: Item):
     prediction = predict_values(item.description)
+    prediction = "{:.3f}".format(prediction)
     return {
             "description": item.description, 
             "predicted_label": prediction
@@ -46,12 +47,14 @@ def predict_values(text):
     # Expecting comma-separated latency values in text
     try:
         values = [float(x) for x in text.strip().split(',')]
+        if (len(values) % 3) != 0:
+            return f"Error: Enter Data in multiples of 3"
         arr = np.array(values, dtype=np.float32).reshape(1, -1, 3)  # (batch, seq, input_size)
         tensor = torch.from_numpy(arr)
         with torch.no_grad():
             output = model(tensor)
             prediction = output.item()
-        return prediction
+        return prediction * 100
     except Exception as e:
         return f"Error: {str(e)}"
 
