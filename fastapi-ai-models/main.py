@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from typing import Optional
 from fastapi.responses import FileResponse
 import torch
 import numpy as np
@@ -15,7 +14,6 @@ class Item(BaseModel):
 async def predict(item: Item):
     prediction = predict_values(item.description)
     return {
-            "name": item.name, 
             "description": item.description, 
             "predicted_label": prediction
             }
