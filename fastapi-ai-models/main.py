@@ -7,7 +7,6 @@ import numpy as np
 app = FastAPI()
 
 class Item(BaseModel):
-    name: str
     description: str
 
 @app.post("/predict/")
