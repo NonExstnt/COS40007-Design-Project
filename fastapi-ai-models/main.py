@@ -40,7 +40,7 @@ NUM_LAYERS = 2
 OUTPUT_SIZE = 1
 
 model = LSTMModel(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE)
-model.load_state_dict(torch.load('../best_lstm_model.pt', map_location=torch.device('cpu')))
+model.load_state_dict(torch.load('models/latency_predictor.pt', map_location=torch.device('cpu')))
 model.eval()
 
 def predict_values(text):
