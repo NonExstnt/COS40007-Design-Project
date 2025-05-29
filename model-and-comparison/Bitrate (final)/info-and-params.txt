@@ -1,2 +1,2 @@
 tuned model# lookback	hidden_size	num_layers	lr	      rmse	     mae
-14	            50	      64	        2	      0.0010	7.124420	5.376775
+14	          50	      64	        2	      0.0010	7.124420	5.376775
