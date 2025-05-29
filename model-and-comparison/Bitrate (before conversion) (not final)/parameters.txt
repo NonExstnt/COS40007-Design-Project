@@ -1,0 +1,6 @@
+input size 8
+lookback=30
+hiddensize= 64
+numoflayers = 2
+lr=0.001
+output size = 1
