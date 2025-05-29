@@ -1,10 +1,14 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 import torch
 import numpy as np
 
 app = FastAPI()
+
+# Mount static directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 class Item(BaseModel):
     description: str
@@ -20,7 +24,11 @@ async def predict(item: Item):
 
 @app.get("/")
 def index():
-    return FileResponse("index.html")
+    return FileResponse("templates/index.html")
+
+@app.get("/map")
+def map_page():
+    return FileResponse("static/map.html")
 
 # Load the LSTM model (adjust class definition as needed)
 class LSTMModel(torch.nn.Module):
