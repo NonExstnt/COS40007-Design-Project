@@ -25,6 +25,8 @@ class LSTMModel(torch.nn.Module):
 class PositionItem(BaseModel):
     hours: float
     speed: float
+    mins:  float
+    latency_avg: float
 
 class BitrateItem(BaseModel):
     latitude: float
@@ -42,11 +44,13 @@ def map_page():
     return FileResponse("static/map.html")
 
 @app.post("/predict_position/")
-async def predict_position(item: PositionItem):
-    latitude, longitude = predict_position_from_xgb(item.hours, item.speed)
+async def predict_position_endpoint(item: PositionItem):
+    latitude, longitude = predict_position(item.hours, item.speed, item.mins, item.latency_avg)
     return {
         "hours": item.hours,
         "speed": item.speed,
+        "mins": item.mins,
+        "latency_avg": item.latency_avg,
         "latitude": float(latitude),
         "longitude": float(longitude)
     }
@@ -57,8 +61,8 @@ xgb_lat.load_model('models/xgb_latitude_model_best.pt')
 xgb_long = XGBRegressor()
 xgb_long.load_model('models/xgb_longitude_model_best.pt')
 
-def predict_position_from_xgb(hours, speed):
-    X = np.array([[hours, speed]], dtype=np.float32)
+def predict_position(hours, speed, mins, latency):
+    X = np.array([[hours, speed, mins, latency]], dtype=np.float32)
     latitude = xgb_lat.predict(X)[0]
     longitude = xgb_long.predict(X)[0]
     return round(latitude, 6), round(longitude, 6)
