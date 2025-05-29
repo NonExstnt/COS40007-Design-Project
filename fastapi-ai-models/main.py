@@ -36,6 +36,9 @@ class LSTMModel(torch.nn.Module):
 INPUT_SIZE = 3
 OUTPUT_SIZE = 1
 
+POS_INPUT_SIZE = 2
+POS_OUTPUT_SIZE = 2
+
 LON_POS_HIDDEN_SIZE = 64
 LON_POS_NUM_LAYERS = 1
 
@@ -64,5 +67,39 @@ def predict_latency(text):
         return prediction * 100
     except Exception as e:
         return f"Error: {str(e)}"
+
+class PositionItem(BaseModel):
+    hours: float
+    speed: float
+
+@app.post("/predict_position/")
+async def predict_position(item: PositionItem):
+    latitude, longitude = predict_position_from_models(item.hours, item.speed)
+    return {
+        "hours": item.hours,
+        "speed": item.speed,
+        "latitude": latitude,
+        "longitude": longitude
+    }
+
+# Load the LSTM models for latitude and longitude
+lat_model = LSTMModel(POS_INPUT_SIZE, LAT_POS_HIDDEN_SIZE, LAT_POS_NUM_LAYERS, POS_OUTPUT_SIZE)
+lat_model.load_state_dict(torch.load('models/latitude_predictor.pt', map_location=torch.device('cpu')))
+lat_model.eval()
+
+lon_model = LSTMModel(POS_INPUT_SIZE, LON_POS_HIDDEN_SIZE, LON_POS_NUM_LAYERS, POS_OUTPUT_SIZE)
+lon_model.load_state_dict(torch.load('models/longitude_predictor.pt', map_location=torch.device('cpu')))
+lon_model.eval()
+
+def predict_position_from_models(hours, speed):
+    # For demonstration, we use dummy altitude=0.0 as third input
+    arr = np.array([[hours, speed]], dtype=np.float32).reshape(1, -1, 2)
+    tensor = torch.from_numpy(arr)
+    with torch.no_grad():
+        lat_out = lat_model(tensor)
+        lon_out = lon_model(tensor)
+        latitude = lat_out[0, 0].item()
+        longitude = lon_out[0, 1].item()
+    return round(latitude, 6), round(longitude, 6)
 
 
