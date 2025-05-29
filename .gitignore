@@ -83,7 +83,7 @@ profile_default/
 ipython_config.py
 
 # Ignore downloaded datasets
-clean_data/
+clean_data/Master5G.csv
 data/
 *.zip
 
