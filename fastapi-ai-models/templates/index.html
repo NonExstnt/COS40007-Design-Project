@@ -36,6 +36,10 @@
         </form>
         <div class="result" id="positionResult" style="display:none;"></div>
     </div>
+    <div style="max-width: 800px; margin: 40px auto;">
+        <h2 style="text-align:center;">Predicted Position Map</h2>
+        <iframe id="mapFrame" src="/static/map.html" width="100%" height="500" style="border:1px solid #ccc; border-radius:8px;"></iframe>
+    </div>
     <script>
         document.getElementById('predictForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -76,6 +80,9 @@
                 const data = await response.json();
                 resultDiv.style.display = 'block';
                 resultDiv.textContent = `Predicted Position: Latitude ${data.latitude}, Longitude ${data.longitude}`;
+                // Send coordinates to map iframe
+                const mapFrame = document.getElementById('mapFrame');
+                mapFrame.contentWindow.postMessage({ latitude: data.latitude, longitude: data.longitude }, '*');
             } catch (err) {
                 resultDiv.style.display = 'block';
                 resultDiv.textContent = 'Error: ' + err.message;
