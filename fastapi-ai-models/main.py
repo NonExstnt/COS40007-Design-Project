@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import torch
 import numpy as np
+from xgboost import XGBRegressor
 
 app = FastAPI()
 
@@ -43,21 +44,10 @@ class LSTMModel(torch.nn.Module):
 
 INPUT_SIZE = 3
 OUTPUT_SIZE = 1
+HIDDEN_SIZE = 64
+NUM_LAYERS = 2
 
-POS_INPUT_SIZE = 2
-POS_OUTPUT_SIZE = 2
-
-LON_POS_HIDDEN_SIZE = 64
-LON_POS_NUM_LAYERS = 1
-
-LAT_POS_HIDDEN_SIZE = 32
-LAT_POS_NUM_LAYERS = 2
-
-# Example: adjust these to match your model's architecture
-LATENCY_HIDDEN_SIZE = 64
-LATENCY_NUM_LAYERS = 2
-
-latency_model = LSTMModel(INPUT_SIZE, LATENCY_HIDDEN_SIZE, LATENCY_NUM_LAYERS, OUTPUT_SIZE)
+latency_model = LSTMModel(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE)
 latency_model.load_state_dict(torch.load('models/latency_predictor.pt', map_location=torch.device('cpu')))
 latency_model.eval()
 
@@ -76,38 +66,30 @@ def predict_latency(text):
     except Exception as e:
         return f"Error: {str(e)}"
 
+# Load XGBoost models for latitude and longitude
+xgb_lat = XGBRegressor()
+xgb_lat.load_model('models/xgb_latitude_model.pt')
+xgb_long = XGBRegressor()
+xgb_long.load_model('models/xgb_longitude_model.pt')
+
 class PositionItem(BaseModel):
     hours: float
     speed: float
 
 @app.post("/predict_position/")
 async def predict_position(item: PositionItem):
-    latitude, longitude = predict_position_from_models(item.hours, item.speed)
+    latitude, longitude = predict_position_from_xgb(item.hours, item.speed)
     return {
         "hours": item.hours,
         "speed": item.speed,
-        "latitude": latitude,
-        "longitude": longitude
+        "latitude": float(latitude),
+        "longitude": float(longitude)
     }
 
-# Load the LSTM models for latitude and longitude
-lat_model = LSTMModel(POS_INPUT_SIZE, LAT_POS_HIDDEN_SIZE, LAT_POS_NUM_LAYERS, POS_OUTPUT_SIZE)
-lat_model.load_state_dict(torch.load('models/latitude_predictor.pt', map_location=torch.device('cpu')))
-lat_model.eval()
-
-lon_model = LSTMModel(POS_INPUT_SIZE, LON_POS_HIDDEN_SIZE, LON_POS_NUM_LAYERS, POS_OUTPUT_SIZE)
-lon_model.load_state_dict(torch.load('models/longitude_predictor.pt', map_location=torch.device('cpu')))
-lon_model.eval()
-
-def predict_position_from_models(hours, speed):
-    # For demonstration, we use dummy altitude=0.0 as third input
-    arr = np.array([[hours, speed]], dtype=np.float32).reshape(1, -1, 2)
-    tensor = torch.from_numpy(arr)
-    with torch.no_grad():
-        lat_out = lat_model(tensor)
-        lon_out = lon_model(tensor)
-        latitude = lat_out[0, 0].item()
-        longitude = lon_out[0, 1].item()
+def predict_position_from_xgb(hours, speed):
+    X = np.array([[hours, speed]], dtype=np.float32)
+    latitude = xgb_lat.predict(X)[0]
+    longitude = xgb_long.predict(X)[0]
     return round(latitude, 6), round(longitude, 6)
 
 
