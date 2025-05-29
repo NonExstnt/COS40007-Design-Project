@@ -18,16 +18,6 @@
 </head>
 <body>
     <div class="container">
-        <h2>5G Position Predictor</h2>
-        <form id="positionForm">
-            <label for="hours">Hour (24h format):</label>
-            <input type="number" id="hours" name="hours" step="any" required placeholder="e.g. 2.5">
-            <label for="speed">Speed (Mbps):</label>
-            <input type="number" id="speed" name="speed" step="any" required placeholder="e.g. 45.0">
-            <button type="submit">Predict Position</button>
-        </form>
-        <div class="result" id="positionResult" style="display:none;"></div>
-        <hr>
         <h2>5G Bitrate Predictor</h2>
         <form id="bitrateForm">
             <label for="latitude">Latitude:</label>
@@ -43,6 +33,16 @@
             <button type="submit">Predict Bitrate</button>
         </form>
         <div class="result" id="bitrateResult" style="display:none;"></div>
+        <hr>
+        <h2>5G Position Predictor</h2>
+        <form id="positionForm">
+            <label for="hours">Hour (24h format):</label>
+            <input type="number" id="hours" name="hours" step="any" required placeholder="e.g. 2.5">
+            <label for="speed">Speed (Mbps):</label>
+            <input type="number" id="speed" name="speed" step="any" required placeholder="e.g. 45.0">
+            <button type="submit">Predict Position</button>
+        </form>
+        <div class="result" id="positionResult" style="display:none;"></div>
     </div>
     <div style="max-width: 800px; margin: 40px auto;">
         <h2 style="text-align:center;">Predicted Position Map</h2>

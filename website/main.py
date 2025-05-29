@@ -53,9 +53,9 @@ async def predict_position(item: PositionItem):
 
 # Load XGBoost models for latitude and longitude
 xgb_lat = XGBRegressor()
-xgb_lat.load_model('models/xgb_latitude_model.pt')
+xgb_lat.load_model('models/xgb_latitude_model_best.pt')
 xgb_long = XGBRegressor()
-xgb_long.load_model('models/xgb_longitude_model.pt')
+xgb_long.load_model('models/xgb_longitude_model_best.pt')
 
 def predict_position_from_xgb(hours, speed):
     X = np.array([[hours, speed]], dtype=np.float32)
