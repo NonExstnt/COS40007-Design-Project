@@ -11,7 +11,7 @@ class Item(BaseModel):
 
 @app.post("/predict/")
 async def predict(item: Item):
-    prediction = predict_values(item.description)
+    prediction = predict_latency(item.description)
     prediction = "{:.3f}".format(prediction)
     return {
             "description": item.description, 
@@ -33,17 +33,24 @@ class LSTMModel(torch.nn.Module):
         out = self.fc(out[:, -1, :])
         return out
 
-# Example: adjust these to match your model's architecture
 INPUT_SIZE = 3
-HIDDEN_SIZE = 64
-NUM_LAYERS = 2
 OUTPUT_SIZE = 1
 
-model = LSTMModel(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE)
-model.load_state_dict(torch.load('models/latency_predictor.pt', map_location=torch.device('cpu')))
-model.eval()
+LON_POS_HIDDEN_SIZE = 64
+LON_POS_NUM_LAYERS = 1
 
-def predict_values(text):
+LAT_POS_HIDDEN_SIZE = 32
+LAT_POS_NUM_LAYERS = 2
+
+# Example: adjust these to match your model's architecture
+LATENCY_HIDDEN_SIZE = 64
+LATENCY_NUM_LAYERS = 2
+
+latency_model = LSTMModel(INPUT_SIZE, LATENCY_HIDDEN_SIZE, LATENCY_NUM_LAYERS, OUTPUT_SIZE)
+latency_model.load_state_dict(torch.load('models/latency_predictor.pt', map_location=torch.device('cpu')))
+latency_model.eval()
+
+def predict_latency(text):
     # Expecting comma-separated latency values in text
     try:
         values = [float(x) for x in text.strip().split(',')]
@@ -52,7 +59,7 @@ def predict_values(text):
         arr = np.array(values, dtype=np.float32).reshape(1, -1, 3)  # (batch, seq, input_size)
         tensor = torch.from_numpy(arr)
         with torch.no_grad():
-            output = model(tensor)
+            output = latency_model(tensor)
             prediction = output.item()
         return prediction * 100
     except Exception as e:
