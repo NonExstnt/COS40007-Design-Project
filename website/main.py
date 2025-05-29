@@ -6,17 +6,12 @@ import torch
 import numpy as np
 from xgboost import XGBRegressor
 
-INPUT_SIZE = 3
-OUTPUT_SIZE = 1
-HIDDEN_SIZE = 64
-NUM_LAYERS = 2
-
 app = FastAPI()
 
 # Mount static directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Load the LSTM model (adjust class definition as needed)
+# Load the LSTM model
 class LSTMModel(torch.nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, output_size):
         super(LSTMModel, self).__init__()
@@ -31,8 +26,12 @@ class PositionItem(BaseModel):
     hours: float
     speed: float
 
-class Item(BaseModel):
-    description: str
+class BitrateItem(BaseModel):
+    latitude: float
+    longitude: float
+    speed: float
+    hour: float
+    latency_avg: float
 
 @app.get("/")
 def index():
@@ -41,35 +40,6 @@ def index():
 @app.get("/map")
 def map_page():
     return FileResponse("static/map.html")
-
-@app.post("/predict/")
-async def predict(item: Item):
-    prediction = predict_latency(item.description)
-    prediction = "{:.3f}".format(prediction)
-    return {
-            "description": item.description, 
-            "predicted_label": prediction
-            }
-
-# Load LSTM model for latency prediction
-latency_model = LSTMModel(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE)
-latency_model.load_state_dict(torch.load('models/latency_predictor.pt', map_location=torch.device('cpu')))
-latency_model.eval()
-
-def predict_latency(text):
-    # Expecting comma-separated latency values in text
-    try:
-        values = [float(x) for x in text.strip().split(',')]
-        if (len(values) % 3) != 0:
-            return f"Error: Enter Data in multiples of 3"
-        arr = np.array(values, dtype=np.float32).reshape(1, -1, 3)  # (batch, seq, input_size)
-        tensor = torch.from_numpy(arr)
-        with torch.no_grad():
-            output = latency_model(tensor)
-            prediction = output.item()
-        return prediction * 100
-    except Exception as e:
-        return f"Error: {str(e)}"
 
 @app.post("/predict_position/")
 async def predict_position(item: PositionItem):
@@ -92,3 +62,38 @@ def predict_position_from_xgb(hours, speed):
     latitude = xgb_lat.predict(X)[0]
     longitude = xgb_long.predict(X)[0]
     return round(latitude, 6), round(longitude, 6)
+
+# Load LSTM model for bitrate prediction
+BITRATE_INPUT_SIZE = 5
+BITRATE_OUTPUT_SIZE = 1
+BITRATE_HIDDEN_SIZE = 64
+BITRATE_NUM_LAYERS = 2
+bitrate_model = LSTMModel(BITRATE_INPUT_SIZE, BITRATE_HIDDEN_SIZE, BITRATE_NUM_LAYERS, BITRATE_OUTPUT_SIZE)
+bitrate_model.load_state_dict(torch.load('models/bitrate_predictor.pt', map_location=torch.device('cpu')))
+bitrate_model.eval()
+
+def predict_bitrate(latitude, longitude, speed, hour, latency_avg):
+    try:
+        arr = np.array([[latitude, longitude, speed, hour, latency_avg]], dtype=np.float32).reshape(1, -1, 5)
+        tensor = torch.from_numpy(arr)
+        with torch.no_grad():
+            output = bitrate_model(tensor)
+            prediction = output.item()
+        return abs(prediction * 100)
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+@app.post("/predict_bitrate/")
+async def predict_bitrate_endpoint(item: BitrateItem):
+    prediction = predict_bitrate(item.latitude, item.longitude, item.speed, item.hour, item.latency_avg)
+    if isinstance(prediction, str) and prediction.startswith("Error"):
+        return {"error": prediction}
+    prediction = "{:.3f}".format(prediction)
+    return {
+        "latitude": item.latitude,
+        "longitude": item.longitude,
+        "speed": item.speed,
+        "hour": item.hour,
+        "latency_avg": item.latency_avg,
+        "predicted_bitrate": prediction
+    }

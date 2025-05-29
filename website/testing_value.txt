@@ -1,0 +1,5 @@
+lat -37.76507
+long 144.837349
+speed 2.998388
+svr_avg 23.75
+expected bitrate 21
