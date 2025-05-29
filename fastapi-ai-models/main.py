@@ -34,6 +34,14 @@ class PositionItem(BaseModel):
 class Item(BaseModel):
     description: str
 
+@app.get("/")
+def index():
+    return FileResponse("templates/index.html")
+
+@app.get("/map")
+def map_page():
+    return FileResponse("static/map.html")
+
 @app.post("/predict/")
 async def predict(item: Item):
     prediction = predict_latency(item.description)
@@ -42,14 +50,6 @@ async def predict(item: Item):
             "description": item.description, 
             "predicted_label": prediction
             }
-
-@app.get("/")
-def index():
-    return FileResponse("templates/index.html")
-
-@app.get("/map")
-def map_page():
-    return FileResponse("static/map.html")
 
 # Load LSTM model for latency prediction
 latency_model = LSTMModel(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE)
@@ -71,12 +71,6 @@ def predict_latency(text):
     except Exception as e:
         return f"Error: {str(e)}"
 
-# Load XGBoost models for latitude and longitude
-xgb_lat = XGBRegressor()
-xgb_lat.load_model('models/xgb_latitude_model.pt')
-xgb_long = XGBRegressor()
-xgb_long.load_model('models/xgb_longitude_model.pt')
-
 @app.post("/predict_position/")
 async def predict_position(item: PositionItem):
     latitude, longitude = predict_position_from_xgb(item.hours, item.speed)
@@ -86,6 +80,12 @@ async def predict_position(item: PositionItem):
         "latitude": float(latitude),
         "longitude": float(longitude)
     }
+
+# Load XGBoost models for latitude and longitude
+xgb_lat = XGBRegressor()
+xgb_lat.load_model('models/xgb_latitude_model.pt')
+xgb_long = XGBRegressor()
+xgb_long.load_model('models/xgb_longitude_model.pt')
 
 def predict_position_from_xgb(hours, speed):
     X = np.array([[hours, speed]], dtype=np.float32)
