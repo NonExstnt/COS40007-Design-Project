@@ -7,6 +7,8 @@ rmse = 7.124420
 mae= 5.376775
 input size= 5 features
 output size= 1 target
+target = 'Bitrate'
+feature names in order = ['latitude', 'longitude', 'speed', 'hour', 'svr_avg']
 
 epoch, rsme and mae results (100):
 Epoch 1, Loss: 21.3669
