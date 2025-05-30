@@ -1,10 +1,11 @@
-lat -37.76507
-long 144.837349
-speed 2.998388
-svr_avg 23.75
-expected bitrate 21
+bitrate prediction
+"lat": -37.76507
+"long": 144.837349
+"speed": 2.998388
+"svr_avg": 23.75
 
-  "hours": 12,
-  "speed": 25,
-  "mins": 27,
-  "latency_avg": 67,
+latitude & longitude prediction
+"hours": 12
+"speed": 25
+"mins": 27
+"latency_avg": 67
