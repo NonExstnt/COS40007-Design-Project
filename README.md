@@ -4,6 +4,82 @@ This web application provides two main features:
 - **5G Bitrate Predictor**: Predicts the expected 5G bitrate at a given location and time.
 - **5G Position Predictor**: Predicts the likely position (latitude, longitude) based on network conditions and time.
 
+## How It Was Developed
+
+The website was developed using [FastAPI](https://fastapi.tiangolo.com/) for the backend, with machine learning models trained on 5G network data. The backend uses:
+- An LSTM (Long Short-Term Memory) neural network (PyTorch) for bitrate prediction.
+- XGBoost regression models for latitude and longitude prediction.
+
+The models were trained offline using historical 5G network measurements, including features such as location, speed, time, and average latency. The trained models are loaded at runtime to provide predictions via API endpoints.
+
+## Input Required
+
+### Bitrate Prediction (`/predict_bitrate/`)
+- **latitude**: float — Current latitude.
+- **longitude**: float — Current longitude.
+- **speed**: float — Current speed (e.g., in km/h).
+- **hour**: float — Hour of the day (0-23).
+- **latency_avg**: float — Average network latency (ms).
+
+Example request:
+```json
+{
+  "latitude": -37.8136,
+  "longitude": 144.9631,
+  "speed": 50.0,
+  "hour": 14,
+  "latency_avg": 30.5
+}
+```
+
+### Position Prediction (`/predict_position/`)
+- **hours**: float — Hours since start or a reference point.
+- **speed**: float — Current speed.
+- **mins**: float — Minutes since start or a reference point.
+- **latency_avg**: float — Average network latency (ms).
+
+Example request:
+```json
+{
+  "hours": 2.5,
+  "speed": 60.0,
+  "mins": 150,
+  "latency_avg": 28.0
+}
+```
+
+## Outcome Produced
+
+- **Bitrate Prediction**:  
+  Returns the predicted 5G bitrate (as a string, rounded to three decimal places) for the given location, time, speed, and latency.
+
+  Example response:
+  ```json
+  {
+    "latitude": -37.8136,
+    "longitude": 144.9631,
+    "speed": 50.0,
+    "hour": 14,
+    "latency_avg": 30.5,
+    "predicted_bitrate": "85.432"
+  }
+  ```
+
+- **Position Prediction**:  
+  Returns the predicted latitude and longitude based on the provided network and time features.
+
+  Example response:
+  ```json
+  {
+    "hours": 2.5,
+    "speed": 60.0,
+    "mins": 150,
+    "latency_avg": 28.0,
+    "latitude": -37.812345,
+    "longitude": 144.965432
+  }
+  ```
+
 ## Prerequisites
 
 - Python 3.8+
